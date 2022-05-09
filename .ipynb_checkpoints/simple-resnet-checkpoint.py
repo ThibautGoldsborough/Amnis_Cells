@@ -48,16 +48,38 @@
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "414d0a06",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Insert filepath for local files  FOR THIBAUT\n",
+    "basepath = r\"C:\\Users\\Thibaut Goldsborough\\Documents\\Seth_BoneMarrow\\Data\\BoneMarrow_sample1\"\n",
+    "readpath = basepath + \"\\\\Raw_Images\"\n",
+    "outpath = basepath + \"\\\\Outputs\"\n",
+    "file_prefix=\"\\\\sample1_\"\n",
+    "maskpath=basepath+\"\\\\ExportedMasks\"\n",
+    "\n",
+    "\n",
+    "\n",
+    "image_dim=64 #Dim of the final images\n",
+    "\n",
+    "nuclear_channel=\"Ch7\"\n",
+    "cellmask_channel=\"Ch1_mask\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
    "id": "2324aa3f",
    "metadata": {},
    "outputs": [],
    "source": [
     "df=pd.read_csv(outpath+\"\\\\cell_info.csv\")\n",
-    "cell_names=np.load(outpath+\"\\\\image_ID.npy\")\n",
-    "cell_names=[int(cell_name) for cell_name in cell_names]\n",
     "\n",
-    "if sum(df[\"Cell_ID\"].to_numpy()!=cell_names)!=0:\n",
-    "    print(\"Error, dataframe cell ID do not match with entries saved during image processing step\")\n"
+    "cell_names=df[\"Cell_ID\"].to_numpy()\n",
+    "\n",
+    "#if sum(df[\"Cell_ID\"].to_numpy()!=cell_names)!=0:\n",
+    " #   print(\"Error, dataframe cell ID do not match with entries saved during image processing step\")\n"
    ]
   },
   {
@@ -107,6 +129,16 @@
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "099d45db",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "len(cell_names)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
    "id": "c5715850",
    "metadata": {},
    "outputs": [],
@@ -123,19 +155,38 @@
   {
    "cell_type": "code",
    "execution_count": null,
+   "id": "47184d3c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "image_dict[0]['Ch1']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
    "id": "ac96b805",
    "metadata": {},
    "outputs": [],
    "source": [
     "Channels=['Ch1']  #Channel to be fed to the NN\n",
     "\n",
-    "# Slightly overkill method to make absolutely sure the images are in order\n",
     "images_with_index = []\n",
     "for image_i in image_dict:\n",
     "    image=cv.merge([image_dict[image_i][i] for i in Channels])\n",
     "    images_with_index.append((int(image_i),image))\n",
     "    \n",
     "images_with_index.sort()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "7754a93f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "len(images_with_index)"
    ]
   },
   {
@@ -155,36 +206,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "2d8af17a",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "labels=df['Cell_Type'].to_numpy()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "88f9933a",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "0.01*10000"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "87bb6615",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "sum(labels==3)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
    "id": "66e7e6b2",
    "metadata": {},
    "outputs": [],
@@ -194,17 +215,6 @@
     "mean=np.array(images).mean()\n",
     "maxi=np.array(images).max()\n",
     "std=np.array(images).std()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "3e0fb898",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "plt.imshow(images[0])\n",
-    "plt.colorbar()"
    ]
   },
   {
@@ -761,14 +771,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "c8358998",
-   "metadata": {},
-   "outputs": [],
-   "source": []
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
    "id": "98d2fbaa",
    "metadata": {},
    "outputs": [],
@@ -779,99 +781,7 @@
     "def resnet18(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
     "    return _resnet(\"resnet18\", BasicBlock, [2, 2, 2, 2], pretrained, progress, **kwargs)\n",
     "\n",
-    "\n",
-    "def resnet34(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNet-34 model from\n",
-    "    `\"Deep Residual Learning for Image Recognition\" <https://arxiv.org/pdf/1512.03385.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    return _resnet(\"resnet34\", BasicBlock, [3, 4, 6, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNet-50 model from\n",
-    "    `\"Deep Residual Learning for Image Recognition\" <https://arxiv.org/pdf/1512.03385.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    return _resnet(\"resnet50\", Bottleneck, [3, 4, 6, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def resnet101(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNet-101 model from\n",
-    "    `\"Deep Residual Learning for Image Recognition\" <https://arxiv.org/pdf/1512.03385.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    return _resnet(\"resnet101\", Bottleneck, [3, 4, 23, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def resnet152(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNet-152 model from\n",
-    "    `\"Deep Residual Learning for Image Recognition\" <https://arxiv.org/pdf/1512.03385.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    return _resnet(\"resnet152\", Bottleneck, [3, 8, 36, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def resnext50_32x4d(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNeXt-50 32x4d model from\n",
-    "    `\"Aggregated Residual Transformation for Deep Neural Networks\" <https://arxiv.org/pdf/1611.05431.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    kwargs[\"groups\"] = 32\n",
-    "    kwargs[\"width_per_group\"] = 4\n",
-    "    return _resnet(\"resnext50_32x4d\", Bottleneck, [3, 4, 6, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def resnext101_32x8d(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"ResNeXt-101 32x8d model from\n",
-    "    `\"Aggregated Residual Transformation for Deep Neural Networks\" <https://arxiv.org/pdf/1611.05431.pdf>`_.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    kwargs[\"groups\"] = 32\n",
-    "    kwargs[\"width_per_group\"] = 8\n",
-    "    return _resnet(\"resnext101_32x8d\", Bottleneck, [3, 4, 23, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def wide_resnet50_2(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"Wide ResNet-50-2 model from\n",
-    "    `\"Wide Residual Networks\" <https://arxiv.org/pdf/1605.07146.pdf>`_.\n",
-    "    The model is the same as ResNet except for the bottleneck number of channels\n",
-    "    which is twice larger in every block. The number of channels in outer 1x1\n",
-    "    convolutions is the same, e.g. last block in ResNet-50 has 2048-512-2048\n",
-    "    channels, and in Wide ResNet-50-2 has 2048-1024-2048.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    kwargs[\"width_per_group\"] = 64 * 2\n",
-    "    return _resnet(\"wide_resnet50_2\", Bottleneck, [3, 4, 6, 3], pretrained, progress, **kwargs)\n",
-    "\n",
-    "\n",
-    "def wide_resnet101_2(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:\n",
-    "    r\"\"\"Wide ResNet-101-2 model from\n",
-    "    `\"Wide Residual Networks\" <https://arxiv.org/pdf/1605.07146.pdf>`_.\n",
-    "    The model is the same as ResNet except for the bottleneck number of channels\n",
-    "    which is twice larger in every block. The number of channels in outer 1x1\n",
-    "    convolutions is the same, e.g. last block in ResNet-50 has 2048-512-2048\n",
-    "    channels, and in Wide ResNet-50-2 has 2048-1024-2048.\n",
-    "    Args:\n",
-    "        pretrained (bool): If True, returns a model pre-trained on ImageNet\n",
-    "        progress (bool): If True, displays a progress bar of the download to stderr\n",
-    "    \"\"\"\n",
-    "    kwargs[\"width_per_group\"] = 64 * 2\n",
-    "    return _resnet(\"wide_resnet101_2\", Bottleneck, [3, 4, 23, 3], pretrained, progress, **kwargs)"
+    "\n"
    ]
   },
   {
@@ -993,10 +903,39 @@
     "\n",
     "\n",
     "\n",
-    "    conf=confusion_matrix(y_trues, y_preds,labels=[0,1,2])\n",
+    "    conf=confusion_matrix(y_trues, y_preds,labels=np.unique(df['Cell_Type'].to_numpy()))\n",
     "\n",
     "    return y_trues,y_preds,conf\n",
     "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "9b2a775e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "a=np.argsort(df['Cell_Type'].unique())\n",
+    "df['Cell_Type_str'].unique()[a]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "dd8fa824",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "53285d2a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "np.unique(df['Cell_Type_str'].to_numpy())"
    ]
   },
   {
@@ -1060,112 +999,21 @@
     "    destination2=new_dir+'\\\\Predictions.csv'\n",
     "    destination3=new_dir+'\\\\Confusion_mat.png'\n",
     "\n",
-    "    df = pd.DataFrame.from_dict(diz_loss)\n",
-    "    df.to_csv (destination1, index = False, header=True)\n",
+    "    df1 = pd.DataFrame.from_dict(diz_loss)\n",
+    "    df1.to_csv (destination1, index = False, header=True)\n",
     "\n",
-    "    df = pd.DataFrame()\n",
-    "    df['Cell_ID']  = validation_ID\n",
-    "    df['Prediction']  = y_preds\n",
-    "    df['Ground Truth']=y_trues\n",
-    "    df.to_csv (destination2, index = False, header=True)\n",
+    "    df1 = pd.DataFrame()\n",
+    "    df1['Cell_ID']  = validation_ID\n",
+    "    df1['Prediction']  = y_preds\n",
+    "    df1['Ground Truth']=y_trues\n",
+    "    df1.to_csv (destination2, index = False, header=True)\n",
     "\n",
     "    fig=plt.figure(figsize=(5,5),dpi=150)\n",
-    "    plot_confusion_matrix(conf, [\"Singlet\",\"Doublet\",\"Debris\"],normalize=True)\n",
+    "    a=np.argsort(df['Cell_Type'].unique())\n",
+    "    list_str=df['Cell_Type_str'].unique()[a]\n",
+    "    plot_confusion_matrix(conf, list_str,normalize=True)\n",
     "    fig.savefig(destination3,bbox_inches='tight', dpi=150)\n"
    ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "04f3b40a",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "# diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet18(False,True),str_model='Polar_resnet18',num_epochs=25,polar=True,batch_size=100)\n",
-    "# y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "# #save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "9e012f65",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "# diz_loss,str_model,NN,validation_loader,_=Run_NN(model=resnet50(False,True),str_model='Polar_resnet50',num_epochs=100,polar=True,batch_size=20)\n",
-    "# y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "# save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "f10780a0",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "# diz_loss,str_model,NN,validation_loader,_=Run_NN(model=resnet152(False,True),str_model='Polar_resnet152',num_epochs=100,polar=True,batch_size=20)\n",
-    "# y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "# save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "8de06f19",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "for trial in range(3):\n",
-    "    diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet18(),str_model='Resnet18'+'(trial='+str(trial)+')',num_epochs=100,polar=False,batch_size=20,lr=1e-4)\n",
-    "    y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "    save_output(diz_loss,str_model,y_trues,y_preds,conf)\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "3f5f095c",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "for trial in range(3):\n",
-    "    diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet50(),str_model='Resnet50'+'(trial='+str(trial)+')',num_epochs=100,polar=False,batch_size=20,lr=1e-4)\n",
-    "    y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "    save_output(diz_loss,str_model,y_trues,y_preds,conf)\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "02aa4356",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "for trial in range(3):\n",
-    "    diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet34(),str_model='Resnet34'+'(trial='+str(trial)+')',num_epochs=100,polar=False,batch_size=20,lr=1e-4)\n",
-    "    y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "    save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "5dd1cde9",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "a=0/0 #Break"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "0f00a2c5",
-   "metadata": {},
-   "outputs": [],
-   "source": []
   },
   {
    "cell_type": "code",
@@ -1174,158 +1022,16 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet18(),str_model='Resnet18',num_epochs=100,polar=False,batch_size=20)\n",
+    "diz_loss,str_model,NN,validation_loader,train_loader=Run_NN(model=resnet18(),str_model='Resnet18',num_epochs=1000,polar=False,batch_size=20)\n",
     "y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "save_output(diz_loss,str_model,y_trues,y_preds,conf)"
+    "save_output(diz_loss,str_model,y_trues,y_preds,conf)\n"
    ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "4ce86e02",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "diz_loss,str_model,NN,validation_loader,_=Run_NN(model=resnet50(False,True),str_model='Resnet50_Norm',num_epochs=100,polar=False,batch_size=20)\n",
-    "y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "7722da51",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "diz_loss,str_model,NN,validation_loader,_=Run_NN(model=resnet152(False,True),str_model='Resnet152_Norm',num_epochs=100,polar=False,batch_size=20)\n",
-    "y_trues,y_preds,conf=get_preds(NN,validation_loader)\n",
-    "save_output(diz_loss,str_model,y_trues,y_preds,conf)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "82417200",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "blurrer =torchvision.transforms.RandomInvert(p=1)\n",
-    "\n",
-    "\n",
-    "with torch.no_grad(): # No need to track the gradients\n",
-    "\n",
-    "    for image_batch,labels_batch in train_loader:\n",
-    "        # Move tensor to the proper device\n",
-    "        #polar_transform(image_batch,'linearpolar')\n",
-    "        # for label in labels_batch:\n",
-    "        #     labels.append(label.numpy())\n",
-    "            \n",
-    "        for image in image_batch:\n",
-    "\n",
-    "            plt.imshow(blurrer(image).detach().cpu().numpy()[0],vmin=-7,vmax=7)\n",
-    "            print(blurrer(image).detach().cpu().numpy()[0][0,0])\n",
-    "            plt.colorbar()\n",
-    "            plt.show()\n",
-    "\n",
-    "            plt.imshow(image.detach().cpu().numpy()[0],vmin=-7,vmax=7)\n",
-    "            print(image.detach().cpu().numpy()[0][0,0])\n",
-    "            plt.colorbar()\n",
-    "            plt.show()\n",
-    "            #break\n",
-    "        break\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "e8f48a11",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "max(diz_loss['val_acc'])"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "cc3dffde",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "data=next(iter(train_loader))"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "298cdf92",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "data[1]"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "35033c84",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "mini=int(round(abs(np.array(images).min()),0))\n",
-    "images=images+abs(np.array(images).min())\n",
-    "mean=np.array(images).mean()\n",
-    "maxi=np.array(images).max()\n",
-    "std=np.array(images).std()\n",
-    "\n",
-    "ratio=255/images.max()\n",
-    "images=images*ratio\n",
-    "\n",
-    "mini=int(mini*ratio)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "bfbcd25f",
-   "metadata": {},
-   "outputs": [],
-   "source": []
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "7a82b9f9",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "import numpy as np\n",
-    "a=np.random.randn(10,10)\n",
-    "\n",
-    "b=transforms.ToTensor(a)\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "2dc0c089",
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "a.mean()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "82b66a46",
-   "metadata": {},
-   "outputs": [],
-   "source": []
   }
  ],
  "metadata": {
+  "interpreter": {
+   "hash": "96e92283253362575e1b2577a58171a1def071c2d4840c376515c402fb1735d8"
+  },
   "kernelspec": {
    "display_name": "Python 3 (ipykernel)",
    "language": "python",
