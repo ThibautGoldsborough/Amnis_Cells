@@ -18,33 +18,16 @@ import pandas as pd
 import random
 from sklearn.metrics import confusion_matrix
 
-# %%
 #Insert filepath for local files  FOR THIBAUT
-basepath = r"C:\Users\Thibaut Goldsborough\Documents\Seth_BoneMarrow\Data\BoneMarrow_smallerfile2"
+basepath = r"C:\Users\Thibaut Goldsborough\Documents\Seth_BoneMarrow\Data\BoneMarrow_sample1"
 readpath = basepath + "\\Raw_Images"
 outpath = basepath + "\\Outputs"
-file_prefix="\\smaller_file2_"
+
 
 num_images=10000
 
 image_dim=64 #Dim of the final images
 
-# %%
-#Insert filepath for local files  FOR THIBAUT
-basepath = r"C:\Users\Thibaut Goldsborough\Documents\Seth_BoneMarrow\Data\BoneMarrow_sample1"
-readpath = basepath + "\\Raw_Images"
-outpath = basepath + "\\Outputs"
-file_prefix="\\sample1_"
-maskpath=basepath+"\\ExportedMasks"
-
-
-
-image_dim=64 #Dim of the final images
-
-nuclear_channel="Ch7"
-cellmask_channel="Ch1_mask"
-
-# %%
 df=pd.read_csv(outpath+"\\cell_info.csv")
 
 cell_names=df["Cell_ID"].to_numpy()
@@ -53,7 +36,6 @@ cell_names=df["Cell_ID"].to_numpy()
  #   print("Error, dataframe cell ID do not match with entries saved during image processing step")
 
 
-# %%
 image_dict={}
 
 for cell_name in cell_names:
