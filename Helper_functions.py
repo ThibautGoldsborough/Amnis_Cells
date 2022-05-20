@@ -61,7 +61,8 @@ def np_image_to_base64(im_matrix):
 def log_pol(x,slope=3,c=1000):
     "This is a combination of an odd polynomial function (e.g. x**3) and a log function for scaling data that are both extremely negative and positive"
     assert slope%2==1
-    y=np.concatenate((-slope*np.log(-x[x<=-c]/c)-1,(x[abs(x)<c]/c)**slope,slope*np.log(x[x>=c]/c)+1))
+    eps=0.0001
+    y=(-slope*np.log(-x*(x<=-c)/c+eps)-1)*(x<=-c)+((x*(abs(x)<c)/c+eps)**slope)*(abs(x)<c)+(slope*np.log(x*(x>=c)/c+eps)+1)*(x>=c)
     return y
 
 def log_pol_scale(array):
