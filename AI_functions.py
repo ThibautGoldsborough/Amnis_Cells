@@ -41,6 +41,28 @@ class CellDataset():
         
         return (data1,data2),np.array((np.argmax(label),ID))
 
+class CellDataset_supervised():
+    def __init__(self, images,labels,ID, transforms=None):
+        self.X = images
+        self.Y=  labels
+        self.Z= ID
+        self.transforms = transforms
+         
+    def __len__(self):
+        return (len(self.X))
+    
+    def __getitem__(self, i):
+        data = self.X[i]
+        label=self.Y[i]
+        ID=self.Z[i]
+        data = np.asarray(data).astype(np.uint8)
+        label = np.asarray(label).astype(np.float32)
+        
+        if self.transforms:
+            data = self.transforms(data)
+        
+        return data,label,ID
+
 def get_mean_std(loader):
         #https://stackoverflow.com/questions/48818619/pytorch-how-do-the-means-and-stds-get-calculated-in-the-transfer-learning-tutor
         mean = 0.
@@ -58,10 +80,8 @@ def get_mean_std(loader):
 
 
 
-def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 100):
+def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 100,sample=False):
     #Split data into training and test, just looking at first images now
-
-    
 
     train_data1=images[:int(train_test_split*len(images))]
     test_data1=images[int(train_test_split*len(images)):]
@@ -80,10 +100,7 @@ def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 
 
     train_data_basic = CellDataset(train_data1,train_labels,train_ID, transform_basic)
     #Create DataLoaders
-    train_loader_basic = DataLoader(train_data_basic, batch_size=100, shuffle=False)
-
-    #data=next(iter(train_loader_basic))[0] Don't delete this is useful
-
+    train_loader_basic = DataLoader(train_data_basic, batch_size=100, shuffle=True)
     mean_loader,std_loader=get_mean_std(train_loader_basic)
 
 
@@ -106,26 +123,25 @@ def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 
     transforms.Normalize(mean=[mean_loader], std=[std_loader])  # for grayscale images
     ])
 
-
     train_data = CellDataset(train_data1,train_labels,train_ID, transform_train)
     test_data = CellDataset(test_data1,test_labels,test_ID, transform_test)
 
     #Oversampling
-    
-    counts=np.bincount(np.argmax(train_labels,axis=1))
-    labels_weights = 1. / counts
-    weights = labels_weights[np.argmax(train_labels,axis=1)]
-    sampler = WeightedRandomSampler(weights, len(weights))
+    if sample==True:
+        counts=np.bincount(np.argmax(train_labels,axis=1))
+        labels_weights = 1. / counts
+        weights = labels_weights[np.argmax(train_labels,axis=1)]
+        sampler = WeightedRandomSampler(weights, len(weights))
 
+        #Create DataLoaders
+        
+        train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False,sampler=sampler)
+        test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+         #Can use these for plotting
+        return train_data,train_data1,train_labels,train_ID,test_data,batch_size,mean_loader,std_loader,sampler
+    else:
+        return [train_data,train_data1,train_labels,train_ID],[test_data,test_data1,test_labels,test_ID],batch_size,mean_loader,std_loader
 
-    #Create DataLoaders
-    
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False,sampler=sampler)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-    #Can use these for plotting
-
-
-    return train_data,train_data1,train_labels,train_ID,test_data,batch_size,mean_loader,std_loader,sampler
 #Barlow
 class BarlowTwinsLoss(torch.nn.Module):
 

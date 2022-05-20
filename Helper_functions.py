@@ -57,6 +57,19 @@ def np_image_to_base64(im_matrix):
     im_url = "data:image/jpeg;base64, " + encoded_image
     return im_url
 
+#Rescaling the labels
+def log_pol(x,slope=3,c=1000):
+    "This is a combination of an odd polynomial function (e.g. x**3) and a log function for scaling data that are both extremely negative and positive"
+    assert slope%2==1
+    y=np.concatenate((-slope*np.log(-x[x<=-c]/c)-1,(x[abs(x)<c]/c)**slope,slope*np.log(x[x>=c]/c)+1))
+    return y
+
+def log_pol_scale(array):
+    for column_i in range(np.shape(array)[1]):
+        scaled_labels=log_pol(array[:,column_i],slope=3,c=1000)
+        scaled_labels=(scaled_labels-np.mean(scaled_labels))/np.std(scaled_labels)
+        array[:,column_i]=scaled_labels
+    return array
 
 def interactive_session(u,display_images,colors,namesdf):
 
@@ -170,6 +183,13 @@ def make_tile(display_images,u,n,savepath):
     u=u.reshape(len(u))
     sorted_u=np.argsort(u)
     display_ims=np.array(display_images)[sorted_u]
+
+    display_ims-=np.min(display_ims)
+    display_ims*=255/np.max(display_ims)
+
+    print(np.min(display_ims),np.max(display_ims))
+
+    
     l=len(u)//n
     for i in range(l):
         for j in range(n):
@@ -186,9 +206,9 @@ def make_tile(display_images,u,n,savepath):
             row_array=np.vstack((row_array,col_array))
 
     plt.figure(dpi=2000)
-    plt.imshow(row_array,cmap="Greys")  
+    plt.imshow(row_array,cmap="Greys",vmin=0,vmax=255)  
     plt.axis('off')
-    if savepath!='False':
+    if savepath!=False:
         plt.savefig(savepath,bbox_inches="tight")
     plt.show()
 
