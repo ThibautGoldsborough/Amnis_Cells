@@ -19,7 +19,7 @@ def load_dict(outpath,cell_names,image_dim):
     names=[]
     for entry in os.listdir(outpath): #Read all files
         if os.path.isfile(os.path.join(outpath, entry)):
-            if entry!='image_ID.npy':
+            if entry[-6:]!='ID.npy':
                 names.append(entry)
     channels=[name[:-4] for name in names if name[-4:]=='.npy']
     print("Channels found:",channels)
@@ -37,6 +37,7 @@ def load_dict(outpath,cell_names,image_dim):
                 img=data_dict[channel][i*image_dim:i*image_dim+image_dim,j*image_dim:j*image_dim+image_dim]
                 image_dict[cell_names[index]][channel]=img
                 index+=1
+    del data_dict
     return image_dict
 
 
@@ -65,7 +66,7 @@ def log_pol(x,slope=3,c=1000):
     y=(-slope*np.log(-x*(x<=-c)/c+eps)-1)*(x<=-c)+((x*(abs(x)<c)/c+eps)**slope)*(abs(x)<c)+(slope*np.log(x*(x>=c)/c+eps)+1)*(x>=c)
     return y
 
-def log_pol_scale(array):
+def log_pol_scale(array,slope=3,c=1000):
     for column_i in range(np.shape(array)[1]):
         scaled_labels=log_pol(array[:,column_i],slope=3,c=1000)
         scaled_labels=(scaled_labels-np.mean(scaled_labels))/np.std(scaled_labels)
@@ -213,5 +214,12 @@ def make_tile(display_images,u,n,savepath):
         plt.savefig(savepath,bbox_inches="tight")
     plt.show()
 
-            
-
+from scipy.interpolate import interpn           
+def density_scatter( x , y, sort = True, bins = 20 )   :
+    data , x_e, y_e = np.histogram2d( x, y, bins = bins, density = True )
+    z = interpn( ( 0.5*(x_e[1:] + x_e[:-1]) , 0.5*(y_e[1:]+y_e[:-1]) ) , data , np.vstack([x,y]).T , method = "splinef2d", bounds_error = False)
+    z[np.where(np.isnan(z))] = 0.0
+    if sort :
+        idx = z.argsort()
+        x, y, z = x[idx], y[idx], z[idx]
+    return x,y,z

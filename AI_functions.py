@@ -67,8 +67,8 @@ def get_mean_std(loader):
         #https://stackoverflow.com/questions/48818619/pytorch-how-do-the-means-and-stds-get-calculated-in-the-transfer-learning-tutor
         mean = 0.
         std = 0.
-        for images, _ in loader:
-            images=images[0]
+        for images, _,_ in loader:
+            images=images #Is this 0 supposed to be here ?
             batch_samples = images.size(0) # batch size (the last batch can have smaller size!)
             images = images.view(batch_samples, images.size(1), -1)
             mean += images.mean(2).sum(0)
@@ -98,7 +98,7 @@ def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 
         transforms.ToTensor()
     ])
 
-    train_data_basic = CellDataset(train_data1,train_labels,train_ID, transform_basic)
+    train_data_basic = CellDataset_supervised(train_data1,train_labels,train_ID, transform_basic)
     #Create DataLoaders
     train_loader_basic = DataLoader(train_data_basic, batch_size=100, shuffle=True)
     mean_loader,std_loader=get_mean_std(train_loader_basic)
@@ -123,8 +123,8 @@ def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 
     transforms.Normalize(mean=[mean_loader], std=[std_loader])  # for grayscale images
     ])
 
-    train_data = CellDataset(train_data1,train_labels,train_ID, transform_train)
-    test_data = CellDataset(test_data1,test_labels,test_ID, transform_test)
+    train_data = CellDataset_supervised(train_data1,train_labels,train_ID, transform_train)
+    test_data = CellDataset_supervised(test_data1,test_labels,test_ID, transform_test)
 
     #Oversampling
     if sample==True:
