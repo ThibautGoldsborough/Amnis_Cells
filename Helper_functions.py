@@ -10,7 +10,6 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-
 def load_dict(outpath,cell_names,image_dim):
     image_dict={}
     for cell_name in cell_names:
@@ -40,7 +39,6 @@ def load_dict(outpath,cell_names,image_dim):
     del data_dict
     return image_dict
 
-
 def to_onehot(my_list,labels):
     return_list=[]
     for i,elem in enumerate(my_list):
@@ -59,34 +57,31 @@ def np_image_to_base64(im_matrix):
     return im_url
 
 #Rescaling the labels
-def log_pol(x,slope=3,c=1000):
+def log_pol(x1,slope=3,c=1000):
     "This is a combination of an odd polynomial function (e.g. x**3) and a log function for scaling data that are both extremely negative and positive"
     assert slope%2==1
     eps=0.0001
+    x=x1.copy()
     y=(-slope*np.log(-x*(x<=-c)/c+eps)-1)*(x<=-c)+((x*(abs(x)<c)/c+eps)**slope)*(abs(x)<c)+(slope*np.log(x*(x>=c)/c+eps)+1)*(x>=c)
     return y
 
-def log_pol_scale(array,slope=3,c=1000):
+def log_pol_scale(array1,slope=3,c=1000):
+    array=array1.copy()
     for column_i in range(np.shape(array)[1]):
-        scaled_labels=log_pol(array[:,column_i],slope=3,c=1000)
+        scaled_labels=log_pol(array[:,column_i],slope=slope,c=c)
         scaled_labels=(scaled_labels-np.mean(scaled_labels))/np.std(scaled_labels)
         array[:,column_i]=scaled_labels
     return array
 
 def interactive_session(u,display_images,colors,namesdf):
-
     dim=np.shape(u)[1]
-
     if np.min(display_images)<0:
         display_images=np.array((np.array(display_images)-np.min(display_images)))
 
     if str(type(display_images[0][0][0]))=="<class 'numpy.float64'>":
         display_images=display_images.astype(np.uint8)
 
-
-   
     buffer = io.StringIO()
-
     if dim==3:
         fig = go.Figure(data=[go.Scatter3d(
             x=u[:, 0],
@@ -98,7 +93,6 @@ def interactive_session(u,display_images,colors,namesdf):
                 color=colors,
             )
         )])
-
     if dim==2:
         fig = go.Figure(data=[go.Scatter(
             x=u[:, 0],
@@ -109,30 +103,16 @@ def interactive_session(u,display_images,colors,namesdf):
                 color=colors,
             )
         )])
-
-
     fig.update_traces(
         hoverinfo="none",
         hovertemplate=None,
     )
-
     fig.update_layout(template='plotly_dark', title="Retinal cell clustering (t-SNE)")
     fig.show()
-
-    #fig.update_layout(
-    #    scene=dict(
-    #        xaxis=dict(range=[-10,10]),
-    #        yaxis=dict(range=[-10,10]), 
-    #    )
-    #)
-
     fig.write_html(buffer)
-
     html_bytes = buffer.getvalue().encode()
     encoded = b64encode(html_bytes).decode()
-
     app = JupyterDash(__name__)
-
     app.layout = html.Div(
         className="container",
         children=[
@@ -141,23 +121,18 @@ def interactive_session(u,display_images,colors,namesdf):
             ], style={'width': '80%' , 'display': 'inline-block', 'vertical-align': 'middle'}
     ) 
 
-
     @app.callback(
         Output("graph-tooltip-5", "show"),
         Output("graph-tooltip-5", "bbox"),
         Output("graph-tooltip-5", "children"),
         Input("graph-5", "hoverData"),
     )
-
     def display_hover(hoverData):
         if hoverData is None:
             return False, no_update, no_update
-
-
         hover_data = hoverData["points"][0]
         bbox = hover_data["bbox"]
         num = hover_data["pointNumber"]
-
         im_matrix = display_images[num]
         im_url = np_image_to_base64(im_matrix)
         children = [
@@ -169,7 +144,6 @@ def interactive_session(u,display_images,colors,namesdf):
                 html.P("Cell ID: " + str(int(namesdf[num])))#, style={'font-weight': 'bold'})
             ])
         ]
-
         return True, bbox, children
 
     if __name__ == "Helper_functions":
@@ -181,17 +155,13 @@ def make_tile(display_images,u,n,savepath):
     """Makes a tile of images according to a 1-dimensional umap, n is the width of the frame in num of images
     savepath can either be "False' or a path string"""
     assert np.shape(u)[1]==1
-
     u=u.reshape(len(u))
     sorted_u=np.argsort(u)
     display_ims=np.array(display_images)[sorted_u]
-
     display_ims-=np.min(display_ims)
     display_ims*=255/np.max(display_ims)
-
     print(np.min(display_ims),np.max(display_ims))
 
-    
     l=len(u)//n
     for i in range(l):
         for j in range(n):
@@ -223,3 +193,58 @@ def density_scatter( x , y, sort = True, bins = 20 )   :
         idx = z.argsort()
         x, y, z = x[idx], y[idx], z[idx]
     return x,y,z
+
+import cv2 as cv
+# Automatic brightness and contrast optimization with optional histogram clipping
+def automatic_brightness_and_contrast(image, clip_hist_percent=25):
+    gray = image#cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Calculate grayscale histogram
+    hist = cv.calcHist([np.float32(gray)],[0],None,[256],[0,256])
+    hist_size = len(hist)
+
+    # Calculate cumulative distribution from the histogram
+    accumulator = []
+    accumulator.append(float(hist[0]))
+    for index in range(1, hist_size):
+        accumulator.append(accumulator[index -1] + float(hist[index]))
+
+    # Locate points to clip
+    maximum = accumulator[-1]
+    clip_hist_percent *= (maximum/100.0)
+    clip_hist_percent /= 2.0
+
+    # Locate left cut
+    minimum_gray = 0
+    while accumulator[minimum_gray] < clip_hist_percent:
+        minimum_gray += 1
+
+    # Locate right cut
+    maximum_gray = hist_size -1
+    while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
+        maximum_gray -= 1
+
+    # Calculate alpha and beta values
+    alpha = 255 / (maximum_gray - minimum_gray+0.000001)
+    beta = -minimum_gray * alpha
+
+    auto_result = cv.convertScaleAbs(image, alpha=alpha, beta=beta)
+    return (auto_result, alpha, beta)
+
+def adjust_contrast(display_images):
+    alphas=[]
+    betas=[]
+    for i in display_images:
+        try:
+            _,a,b=automatic_brightness_and_contrast(i,clip_hist_percent=0.15)
+            alphas.append(a)
+            betas.append(b)
+        except:
+            pass
+
+
+    print(np.median(alphas),np.median(betas))
+
+    adjusted_contrast=[255-cv.convertScaleAbs(i, alpha=np.median(alphas), beta=np.median(betas)) for i in display_images]
+
+    return adjusted_contrast

@@ -95,6 +95,7 @@ def data_generator(images,labels,names,mini,train_test_split = 0.8,batch_size = 
     #Transform data into tensors, normalize images
     transform_basic = transforms.Compose(
         [transforms.ToPILImage(),
+      #  transforms.Lambda(lambda x: np.array(x) -mini ),  #This was added on 12/07
         transforms.ToTensor()
     ])
 
